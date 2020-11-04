@@ -96,6 +96,12 @@ impl BiliId {
     }
 
     /// Encode Av
+    /// ```
+    /// use bv2av::BiliId;
+    /// 
+    /// assert_eq!(BiliId::from(314).enc().get_bv(), Some("1xx411c7XW"));
+    /// ```
+    /// 
     pub fn enc(&self) -> BiliId {
         match self {
             BiliId::Av(mut num) => BiliId::Bv({
