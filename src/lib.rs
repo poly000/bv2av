@@ -4,18 +4,25 @@ use std::convert::From;
 
 #[cfg(test)]
 mod tests {
-    use super::BiliId;
+    use super::{BiliBv,BiliAv};
 
     #[test]
     fn enc_works() {
-        assert_eq!(BiliId::Av(170001).enc().get_bv().unwrap(), "17x411w7KC");
-        assert_eq!(BiliId::Av(314).enc().get_bv().unwrap(), "1xx411c7XW");
+        assert_eq!(BiliAv(170001).enc().get(), "17x411w7KC");
+        assert_eq!(BiliAv(314).enc().get(), "1xx411c7XW");
     }
 
     #[test]
     fn dec_works() {
-        assert_eq!(BiliId::Bv("17x411w7KC".to_string()).dec().get_av().unwrap(), 170001);
-        assert_eq!(BiliId::Bv("1xx411c7XW".to_string()).dec().get_av().unwrap(), 314);
+        assert_eq!(BiliBv("17x411w7KC".to_string()).dec().get(), 170001);
+        assert_eq!(BiliBv("1xx411c7XW".to_string()).dec().get(), 314);
+    }
+
+    #[test]
+    fn display_works() {
+        assert_eq!(format!("{}",BiliBv("1xx411c7XW".to_string())),
+                    "bv1xx411c7XW".to_string());
+        assert_eq!(format!("{}",BiliAv(170001)), "av170001".to_string())
     }
 }
 
@@ -35,108 +42,109 @@ lazy_static! {
 }
 
 
-#[derive(Clone,Debug)]
-pub enum BiliId {
-    Bv(String),
-    Av(u64),
-}
+#[derive(Copy,Clone,Debug)]
+pub struct BiliAv(pub u64);
 
-impl BiliId {
-    /// Get AV Number:
-    /// 
-    /// ```
-    /// use bv2av::BiliId;
-    /// 
-    /// assert_eq!(BiliId::Bv(
-    /// "17x411w7KC".to_string())
-    ///     .dec().get_av()
-    ///     , Some(170001));
-    /// 
-    /// assert_eq!(BiliId::Bv("17x411w7KC".to_string()).get_av()
-    ///     , None);
-    /// 
-    /// 
-    /// ```
-    pub fn get_av(&self) -> Option<u64> {
-        match self {
-            BiliId::Av(n) => Some(*n),
-            _ => None,
-        }
-    }
+#[derive(Clone,Debug)]
+pub struct BiliBv(pub String);
+
+impl BiliBv {
 
     /// Get BV Id ( NO 'bv' INCLUDED! ) :
-    pub fn get_bv(&self) -> Option<&str> {
-        match self {
-            BiliId::Bv(s) => Some(s),
-            _ => None,
-        }
+    /// 
+    /// ```
+    /// use bv2av::*;
+    /// assert_eq!(BiliBv::from("17x411w7KC").get(), 
+    ///             "17x411w7KC");
+    /// ```
+    /// 
+    pub fn get(&self) -> &str {
+        &self.0
     }
 
     /// Decode Bv
     /// 
     /// ```
-    /// use bv2av::BiliId;
+    /// use bv2av::*;
     /// 
-    /// assert_eq!(BiliId::from("1xx411c7XW").dec().get_av(), Some(314));
+    /// assert_eq!(BiliBv::from("1xx411c7XW").dec().get(), 314);
     /// ```
     /// 
-    pub fn dec(&self) -> BiliId {
-        match self {
-            BiliId::Bv(str) => BiliId::Av({
-                let b = str.as_bytes();
-                ((0..6)
-                    .map(|i| {
-                        let index = S[i as usize] as usize;
-                        let index = b[index];
-                        TR[ index as usize ] as u64 * 58u64.pow(i)
-                    })
-                    .sum::<u64>() - ADD) ^ XOR}),
-            _ => self.clone(),
-        }
-    }
-
-    /// Encode Av
-    /// ```
-    /// use bv2av::BiliId;
-    /// 
-    /// assert_eq!(BiliId::from(314).enc().get_bv(), Some("1xx411c7XW"));
-    /// ```
-    /// 
-    pub fn enc(&self) -> BiliId {
-        match self {
-            BiliId::Av(mut num) => BiliId::Bv({
-                num = (num ^ XOR) + ADD;
-                let mut str = String::from("1  4 1 7  ");
-                let b = unsafe { str.as_bytes_mut() };
-                for i in 0..6 {
-                    let index = S[i as usize] as usize;
-                    b[index] = TABLE[ (num / 58u64.pow(i) % 58) as usize ];
-                }
-                str
-            }),
-            _ => self.clone(),
-        }
+    pub fn dec(&self) -> BiliAv {
+        let str = self.get();
+        BiliAv({
+            let b = str.as_bytes();
+            ((0..6)
+            .map(|i| {
+            let index = S[i as usize] as usize;
+            let index = b[index];
+            TR[ index as usize ] as u64 * 58u64.pow(i)
+            })
+            .sum::<u64>() - ADD) ^ XOR
+        })
     }
 
 }
 
-impl std::fmt::Display for BiliId {
+impl std::fmt::Display for BiliBv {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            BiliId::Bv(_) => write!(f,"bv{}", self.get_bv().unwrap()),
-            BiliId::Av(_) => write!(f,"av{}", self.get_av().unwrap()),
-        }
+        write!(f,"bv{}", self.get())
     }
 }
 
-impl From<u64> for BiliId {
+impl std::fmt::Display for BiliAv {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f,"av{}", self.get())
+    }
+}
+
+impl From<u64> for BiliAv {
     fn from(av_num: u64) -> Self {
-        BiliId::Av(av_num)
+        BiliAv(av_num)
     }
 }
 
-impl<'a> From<&str> for BiliId {
+impl From<&str> for BiliBv {
     fn from(str: &str) -> Self {
-        BiliId::Bv(str.to_string())
+        BiliBv(str.to_string())
+    }
+}
+
+
+impl BiliAv {
+
+    /// Get AV Number:
+    /// 
+    /// ```
+    /// use bv2av::BiliAv;
+    /// 
+    /// assert_eq!(BiliAv(170001).get()
+    ///     , 170001); 
+    /// 
+    /// ```
+    
+    pub fn get(&self) -> u64 {
+        self.0
+    }
+
+    /// Encode Bv
+    /// 
+    /// ```
+    /// use bv2av::{BiliAv,BiliBv};
+    /// 
+    /// assert_eq!(BiliAv(170001).enc().get(), "17x411w7KC");
+    /// ```
+    
+    pub fn enc(&self) -> BiliBv {
+        let num = (self.0 ^ XOR) + ADD;
+        BiliBv({
+            let mut str = String::from("1  4 1 7  ");
+            let b = unsafe { str.as_bytes_mut() };
+            for i in 0..6 {
+                let index = S[i as usize] as usize;
+                b[index] = TABLE[ (num / 58u64.pow(i) % 58) as usize ];
+            }
+            str
+        })
     }
 }
