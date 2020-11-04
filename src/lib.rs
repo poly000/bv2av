@@ -1,5 +1,6 @@
 //!
 //!  This is a convertor for bilibili's video ID.
+//!
 //!  For simplier usage, you can use enc(u64) -> String and
 //!     dec(&str) -> u64 instead of BiliAv & BiliBv.
 //!
