@@ -88,12 +88,14 @@ impl BiliBv {
 }
 
 impl std::fmt::Display for BiliBv {
+    /// Will add 'bv'
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "bv{}", self.get())
     }
 }
 
 impl std::fmt::Display for BiliAv {
+    /// Will add 'av'
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "av{}", self.get())
     }
