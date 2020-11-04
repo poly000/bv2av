@@ -35,7 +35,7 @@ lazy_static! {
 }
 
 
-#[derive(Debug)]
+#[derive(Clone,Debug)]
 pub enum BiliId {
     Bv(String),
     Av(u64),
@@ -80,7 +80,7 @@ impl BiliId {
     /// assert_eq!(BiliId::from("1xx411c7XW").dec().get_av(), Some(314));
     /// ```
     /// 
-    pub fn dec(self) -> BiliId {
+    pub fn dec(&self) -> BiliId {
         match self {
             BiliId::Bv(str) => BiliId::Av({
                 let b = str.as_bytes();
@@ -91,12 +91,12 @@ impl BiliId {
                         TR[ index as usize ] as u64 * 58u64.pow(i)
                     })
                     .sum::<u64>() - ADD) ^ XOR}),
-            _ => self,
+            _ => self.clone(),
         }
     }
 
     /// Encode Av
-    pub fn enc(self) -> BiliId {
+    pub fn enc(&self) -> BiliId {
         match self {
             BiliId::Av(mut num) => BiliId::Bv({
                 num = (num ^ XOR) + ADD;
@@ -108,7 +108,7 @@ impl BiliId {
                 }
                 str
             }),
-            _ => self,
+            _ => self.clone(),
         }
     }
 
