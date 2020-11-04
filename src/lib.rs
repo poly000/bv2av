@@ -1,9 +1,9 @@
 //!
 //!  This is a convertor for bilibili's video ID.
-//!  For simplier usage, you can use enc(u64) -> String and 
+//!  For simplier usage, you can use enc(u64) -> String and
 //!     dec(&str) -> u64 instead of BiliAv & BiliBv.
-//! 
-//! 
+//!
+//!
 
 use lazy_static::*;
 use std::convert::From;
@@ -15,11 +15,10 @@ mod tests {
 
     #[test]
     fn enc_works() {
-
         assert_eq!(BiliAv(170001).enc().get(), "17x411w7KC");
         assert_eq!(BiliAv(314).enc().get(), "1xx411c7XW");
 
-        assert_eq!(enc(314),"1xx411c7XW".to_owned());
+        assert_eq!(enc(314), "1xx411c7XW".to_owned());
     }
 
     #[test]
@@ -27,7 +26,7 @@ mod tests {
         assert_eq!(BiliBv("17x411w7KC".to_string()).dec().get(), 170001);
         assert_eq!(BiliBv("1xx411c7XW".to_string()).dec().get(), 314);
 
-        assert_eq!(dec("1xx411c7XW"),314);
+        assert_eq!(dec("1xx411c7XW"), 314);
     }
 
     #[test]
@@ -84,18 +83,7 @@ impl BiliBv {
     ///
     pub fn dec(&self) -> BiliAv {
         let str = self.get();
-        BiliAv({
-            let b = str.as_bytes();
-            ((0..6)
-                .map(|i| {
-                    let index = S[i as usize] as usize;
-                    let index = b[index];
-                    TR[index as usize] as u64 * 58u64.pow(i)
-                })
-                .sum::<u64>()
-                - ADD)
-                ^ XOR
-        })
+        BiliAv(dec(str))
     }
 }
 
@@ -149,16 +137,8 @@ impl BiliAv {
     /// ```
 
     pub fn enc(&self) -> BiliBv {
-        let num = (self.0 ^ XOR) + ADD;
-        BiliBv({
-            let mut str = String::from("1  4 1 7  ");
-            let b = unsafe { str.as_bytes_mut() };
-            for i in 0..6 {
-                let index = S[i as usize] as usize;
-                b[index] = TABLE[(num / 58u64.pow(i) % 58) as usize];
-            }
-            str
-        })
+        let num = self.0;
+        BiliBv(enc(num))
     }
 }
 
