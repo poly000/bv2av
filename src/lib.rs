@@ -6,8 +6,6 @@
 //!
 //!
 
-#![feature(const_fn)]
-
 use std::convert::From;
 use std::fmt;
 
