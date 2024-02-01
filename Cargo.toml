@@ -1,12 +1,9 @@
 [package]
 name = "bv2av"
-version = "1.2.2"
-license = "WTFPL"
+version = "1.2.3"
+license = "MIT"
 authors = ["poly000 <1348292515@qq.com>"]
 edition = "2018"
 description = "A converter for bilibili.com video's ID. | algorithm by mcfx | Bilibili的视频id的转换器。"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-
-
